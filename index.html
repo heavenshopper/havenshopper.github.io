@@ -1,85 +1,785 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>HAVEN SHOPPER</title>
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <!-- External CSS -->
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจองรถ - Car Booking System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Sukhumvit Set', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .status-pending {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
+    .status-approved {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
+    .status-using {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
+    .status-completed {
+      background: #f3f4f6;
+      color: #374151;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
+    .status-cancelled {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
-<body>
-  <!-- Contact Overlay -->
-  <div class="contact-overlay" id="contactOverlay"></div>
 
-  <!-- Contact Menu -->
-  <div class="contact-menu" id="contactMenu">
-    <div class="menu-arrow"></div>
-    <div class="menu-header">
-      <h3>ช่องทางติดต่อ</h3>
-      <p>เลือกช่องทางที่สะดวกสำหรับคุณ</p>
+<body class="bg-gray-100">
+  <!-- Password Modal -->
+  <div id="password-modal" class="modal">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🔒 Admin Mode</h3>
+      <p class="text-gray-600 mb-4">กรุณาใส่รหัสผ่านเพื่อเข้าสู่โหมด Admin</p>
+      <input type="password" id="admin-password"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+        placeholder="รหัสผ่าน">
+      <div class="flex gap-2">
+        <button onclick="checkPassword()"
+          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">เข้าสู่ระบบ</button>
+        <button onclick="closePasswordModal()"
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg transition">ยกเลิก</button>
+      </div>
+      <p id="password-error" class="text-red-500 text-sm mt-2 hidden">รหัสผ่านไม่ถูกต้อง!</p>
     </div>
-    <div class="contact-list">
-      <a href="#" class="contact-item messenger" onclick="openMessenger(event)">
-        <div class="contact-icon"><i class="fab fa-facebook-messenger"></i></div>
-        <div class="contact-info">
-          <div class="contact-title">Facebook Messenger</div>
-          <div class="contact-subtitle">ส่งข้อความหาเราผ่าน Messenger</div>
+  </div>
+
+  <nav class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          <h1 class="text-xl font-bold">Car Booking System</h1>
         </div>
-      </a>
-      <a href="#" class="contact-item line" onclick="openLine(event)">
-        <div class="contact-icon"><i class="fab fa-line"></i></div>
-        <div class="contact-info">
-          <div class="contact-title">LINE Account</div>
-          <div class="contact-subtitle">แชทผ่าน LINE Official Account</div>
+        <div class="hidden md:flex items-center gap-4">
+          <button onclick="showPage('booking')" id="nav-booking"
+            class="px-4 py-2 rounded-lg transition hover:bg-blue-700">📅 จองรถ</button>
+          <button onclick="showPage('check')" id="nav-check"
+            class="px-4 py-2 rounded-lg transition hover:bg-blue-700">📋 ตรวจสอบการจอง</button>
+          <button onclick="showPage('report')" id="nav-report"
+            class="px-4 py-2 rounded-lg transition hover:bg-blue-700">📊 รายงาน</button>
+          <button onclick="toggleRole()" id="role-toggle"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-lg transition">👤 User Mode</button>
         </div>
-      </a>
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 hover:bg-blue-700 rounded-lg">☰</button>
+      </div>
+      <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-2">
+        <button onclick="showPage('booking'); toggleMobileMenu();"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700">📅 จองรถ</button>
+        <button onclick="showPage('check'); toggleMobileMenu();"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700">📋 ตรวจสอบการจอง</button>
+        <button onclick="showPage('report'); toggleMobileMenu();"
+          class="w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700">📊 รายงาน</button>
+      </div>
     </div>
-  </div>
+  </nav>
 
-  <!-- Floating Action Button -->
-  <button class="fab-main" id="fabMain" onclick="toggleContactMenu()">
-    <i class="fas fa-comment" id="fabIcon"></i>
-  </button>
-
-  <!-- Header -->
-  <div class="header">
-    <h1 class="site-header">
-      <img src="https://drive.google.com/thumbnail?id=1HGxfThUV4U5VxnmLAngTf5VqICV5ZV1l" alt="Logo" class="logo-img">
-      <span>HAVEN SHOPPER STOCK</span>
-    </h1>
-    <div class="category-menu">
-      <button class="category-btn active" data-category="new">🎉 สินค้าเข้าใหม่!</button>
-      <button class="category-btn" data-category="promotion">🔥 โปรโมชั่น ไฟลุก!</button>
-      <button class="category-btn" data-category="common">🔖 สินค้าทั่วไป</button>
-      <button class="category-btn" data-category="gaming">🎮 เกมมิ่งเกียร์</button>
-      <button class="category-btn" data-category="gadget it">📱 ไอที</button>
-      <button class="category-btn" data-category="motorcycle/car parts">🚗 อะไหล่รถ</button>
-      <button class="category-btn" data-category="sport">⚽ กีฬา</button>
-      <button class="category-btn" data-category="music equipment">🎸 ดนตรี</button>
+  <main class="container mx-auto px-4 py-8">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="text-center py-12">
+      <div class="loading mx-auto mb-4" style="width: 48px; height: 48px; border-width: 5px;"></div>
+      <p class="text-gray-600">กำลังโหลดข้อมูล...</p>
     </div>
-  </div>
 
-  <!-- Product Grid -->
-  <div class="menu-grid" id="menu-container">
-    <div class="loading">กำลังโหลดสินค้า...</div>
-  </div>
+    <!-- Booking Page -->
+    <div id="page-booking" class="page hidden">
+      <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">📝 จองรถใช้งาน</h2>
+        <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน *</label>
+              <input type="text" id="id_code"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="เช่น EMP001">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล *</label>
+              <input type="text" id="name"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="ชื่อ นามสกุล">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">แผนก *</label>
+            <select id="department"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+              <option value="">กำลังโหลด...</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">🚗 เลือกรถ *</label>
+              <select id="car_no"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">กำลังโหลด...</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">👤 พนักงานขับรถ *</label>
+              <select id="driver"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                <option value="">กำลังโหลด...</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">📅 วันที่ใช้รถ *</label>
+              <input type="date" id="use_date"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">🕐 เวลาเริ่มต้น *</label>
+              <input type="time" id="start_time"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">🕐 เวลาสิ้นสุด *</label>
+              <input type="time" id="end_time"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">📍 สถานที่ *</label>
+            <textarea id="place" rows="3"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="ระบุสถานที่ที่ต้องการไป"></textarea>
+          </div>
+          <button onclick="submitBooking()" id="submit-btn"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition shadow-lg">
+            ส่งคำขอจองรถ
+          </button>
+        </div>
+      </div>
+    </div>
 
-  <!-- Hover Preview -->
-  <div id="image-preview" class="image-preview"><img src="" alt="Preview"></div>
+    <!-- Check Page -->
+    <div id="page-check" class="page hidden">
+      <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">📋 ตรวจสอบและอนุมัติการจอง</h2>
+          <span id="booking-count" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-medium">0 รายการ</span>
+        </div>
+        <div id="check-content" class="overflow-x-auto"></div>
+      </div>
+    </div>
 
-  <!-- Modal -->
-  <div id="preview-modal" class="preview-modal" role="dialog" aria-modal="true">
-    <button class="close-modal" aria-label="ปิด">&times;</button>
-    <div class="zoom-wrap"><img id="zoom-img" src="" alt="Preview Large"></div>
-  </div>
+    <!-- Report Page -->
+    <div id="page-report" class="page hidden">
+      <div class="max-w-7xl mx-auto space-y-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="bg-white rounded-lg shadow p-4">
+            <div id="stat-total" class="text-2xl font-bold text-gray-800">0</div>
+            <div class="text-sm text-gray-600">ทั้งหมด</div>
+          </div>
+          <div class="bg-yellow-50 rounded-lg shadow p-4">
+            <div id="stat-pending" class="text-2xl font-bold text-yellow-800">0</div>
+            <div class="text-sm text-yellow-700">รออนุมัติ</div>
+          </div>
+          <div class="bg-green-50 rounded-lg shadow p-4">
+            <div id="stat-approved" class="text-2xl font-bold text-green-800">0</div>
+            <div class="text-sm text-green-700">อนุมัติแล้ว</div>
+          </div>
+          <div class="bg-blue-50 rounded-lg shadow p-4">
+            <div id="stat-using" class="text-2xl font-bold text-blue-800">0</div>
+            <div class="text-sm text-blue-700">กำลังใช้งาน</div>
+          </div>
+          <div class="bg-gray-50 rounded-lg shadow p-4">
+            <div id="stat-completed" class="text-2xl font-bold text-gray-800">0</div>
+            <div class="text-sm text-gray-700">เสร็จสิ้น</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold mb-4">🔍 กรองข้อมูล</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <select id="filter-car" class="px-4 py-2 border rounded-lg" onchange="applyFilters()">
+              <option value="">ทุกคัน</option>
+            </select>
+            <select id="filter-dept" class="px-4 py-2 border rounded-lg" onchange="applyFilters()">
+              <option value="">ทุกแผนก</option>
+            </select>
+            <select id="filter-status" class="px-4 py-2 border rounded-lg" onchange="applyFilters()">
+              <option value="">ทุกสถานะ</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Using">Using</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <input type="date" id="filter-date" class="px-4 py-2 border rounded-lg" onchange="applyFilters()">
+          </div>
+          <button onclick="clearFilters()"
+            class="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-800">ล้างตัวกรอง</button>
+        </div>
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold mb-4">📈 รายงานการใช้รถ (<span id="filtered-count">0</span> รายการ)</h3>
+          <div id="report-content" class="overflow-x-auto"></div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-  <!-- Google Charts Loader (needed by gviz JSONP) -->
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <!-- External JS -->
-  <script src="script.js"></script>
+  <footer class="bg-white border-t mt-12 py-6">
+    <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+      <p>🚗 Car Booking System 2025 | 3AC IT SUPPORT</p>
+    </div>
+  </footer>
+
+  <script>
+    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyVnX_SimrXTb1-EnPiQfzNxLcGk1kGCxoIxsiMfwNrq-kZBs4sQys9-6SyHNTUi_6/exec';
+
+    var bookings = [];
+    var masterData = { departments: [], cars: [], drivers: [] };
+    var userRole = 'user';
+    var currentPage = 'booking';
+
+    // Initialize
+    window.addEventListener('load', function () {
+      initializeApp();
+    });
+
+    async function initializeApp() {
+      try {
+        await loadMasterData();
+        await loadBookings();
+        document.getElementById('loading-screen').style.display = 'none';
+        showPage('booking');
+      } catch (error) {
+        console.error('Init error:', error);
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message);
+      }
+    }
+
+    async function loadMasterData() {
+      try {
+        var response = await fetch(SCRIPT_URL + '?action=getMasterData');
+        var result = await response.json();
+
+        if (result.success) {
+          masterData = result.data;
+          populateDropdowns();
+        } else {
+          throw new Error(result.error || 'Failed to load master data');
+        }
+      } catch (error) {
+        console.error('Load master data error:', error);
+        throw error;
+      }
+    }
+
+    function populateDropdowns() {
+      var deptSelect = document.getElementById('department');
+      var carSelect = document.getElementById('car_no');
+      var driverSelect = document.getElementById('driver');
+      var filterCarSelect = document.getElementById('filter-car');
+      var filterDeptSelect = document.getElementById('filter-dept');
+
+      deptSelect.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+      filterDeptSelect.innerHTML = '<option value="">ทุกแผนก</option>';
+      for (var i = 0; i < masterData.departments.length; i++) {
+        var d = masterData.departments[i];
+        deptSelect.innerHTML += '<option value="' + d.id + '">' + d.id + ' - ' + d.name + '</option>';
+        filterDeptSelect.innerHTML += '<option value="' + d.id + '">' + d.id + '</option>';
+      }
+
+      carSelect.innerHTML = '<option value="">-- เลือกรถ --</option>';
+      filterCarSelect.innerHTML = '<option value="">ทุกคัน</option>';
+      for (var i = 0; i < masterData.cars.length; i++) {
+        var c = masterData.cars[i];
+        carSelect.innerHTML += '<option value="' + c.plate + '">' + c.plate + ' - ' + c.model + '</option>';
+        filterCarSelect.innerHTML += '<option value="' + c.plate + '">' + c.plate + '</option>';
+      }
+
+      driverSelect.innerHTML = '<option value="">-- เลือกพนักงานขับรถ --</option>';
+      for (var i = 0; i < masterData.drivers.length; i++) {
+        var dr = masterData.drivers[i];
+        driverSelect.innerHTML += '<option value="' + dr.name + '">' + dr.name + '</option>';
+      }
+    }
+
+    // ===============================
+    // Helper Functions
+    // ===============================
+    function normalizeDate(dateStr) {
+      // รับ date string และคืนค่าเป็น YYYY-MM-DD
+      if (!dateStr) return '';
+      
+      // ถ้าเป็น ISO string (2025-12-25T17:00:00.000Z)
+      if (dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+      }
+      
+      // ถ้าเป็น format อื่น ๆ
+      if (dateStr.includes(' ')) {
+        return dateStr.split(' ')[0];
+      }
+      
+      return dateStr;
+    }
+
+    function formatTimeOnly(timeStr) {
+      // แปลงเวลาให้เป็น HH:mm เท่านั้น
+      if (!timeStr) return '';
+      
+      // ถ้าเป็น ISO string (1899-12-30T06:17:56.000Z)
+      if (timeStr.includes('T')) {
+        var timePart = timeStr.split('T')[1];
+        if (timePart) {
+          return timePart.substring(0, 5); // เอาแค่ HH:mm
+        }
+      }
+      
+      // ถ้าเป็น datetime string (2025-12-25 14:30:00)
+      if (timeStr.includes(' ')) {
+        var parts = timeStr.split(' ');
+        if (parts.length > 1) {
+          return parts[1].substring(0, 5); // เอาแค่ HH:mm
+        }
+      }
+      
+      // ถ้าเป็นเวลาอยู่แล้ว (14:30:00)
+      if (timeStr.includes(':')) {
+        return timeStr.substring(0, 5);
+      }
+      
+      return timeStr;
+    }
+
+    function formatDateThai(dateStr) {
+      // แสดงวันที่ในรูปแบบ DD/MM/YYYY
+      if (!dateStr) return '';
+      
+      var normalized = normalizeDate(dateStr);
+      if (!normalized) return dateStr;
+      
+      var parts = normalized.split('-');
+      if (parts.length === 3) {
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+      }
+      
+      return dateStr;
+    }
+
+    // ===============================
+    // Load bookings
+    // ===============================
+    async function loadBookings() {
+      try {
+        var response = await fetch(SCRIPT_URL + '?action=getBookings');
+        var result = await response.json();
+
+        if (result.success) {
+          bookings = result.data || [];
+          updateUI();
+        } else {
+          throw new Error(result.error || 'Failed to load bookings');
+        }
+      } catch (error) {
+        console.error('Load bookings error:', error);
+        bookings = [];
+      }
+    }
+
+    // ===============================
+    // Submit booking
+    // ===============================
+    async function submitBooking() {
+      var btn = document.getElementById('submit-btn');
+      var originalText = btn.textContent;
+
+      var data = {
+        id_code: document.getElementById('id_code').value.trim(),
+        name: document.getElementById('name').value.trim(),
+        department: document.getElementById('department').value,
+        car_no: document.getElementById('car_no').value,
+        use_date: document.getElementById('use_date').value,
+        start_time: document.getElementById('start_time').value,
+        end_time: document.getElementById('end_time').value,
+        place: document.getElementById('place').value.trim(),
+        driver: document.getElementById('driver').value
+      };
+
+      if (
+        !data.id_code || !data.name || !data.department ||
+        !data.car_no || !data.use_date ||
+        !data.start_time || !data.end_time ||
+        !data.place || !data.driver
+      ) {
+        alert('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> กำลังบันทึก...';
+
+        var payload = {
+          action: 'addBooking',
+          id: 'BK' + Date.now(),
+          id_code: data.id_code,
+          name: data.name,
+          department: data.department,
+          car_no: data.car_no,
+
+          // ส่งแยก date และ time
+          use_date: data.use_date,
+          start_time: data.start_time,
+          end_time: data.end_time,
+
+          place: data.place,
+          driver: data.driver,
+          booking_checked: 'No',
+          approved: 'No',
+          status: 'Pending',
+
+          // format วันเวลาปัจจุบัน
+          created_at: new Date().toLocaleString('th-TH', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          })
+        };
+
+        var response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        var result = await response.json();
+
+        if (result.success) {
+          alert('✅ จองรถสำเร็จ! รอการอนุมัติจากแอดมิน');
+
+          // reset form
+          document.getElementById('id_code').value = '';
+          document.getElementById('name').value = '';
+          document.getElementById('department').value = '';
+          document.getElementById('car_no').value = '';
+          document.getElementById('use_date').value = '';
+          document.getElementById('start_time').value = '';
+          document.getElementById('end_time').value = '';
+          document.getElementById('place').value = '';
+          document.getElementById('driver').value = '';
+
+          await loadBookings();
+        } else {
+          throw new Error(result.error || 'Failed to save booking');
+        }
+      } catch (error) {
+        console.error('Submit error:', error);
+        alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    async function updateBooking(id, field, value) {
+      try {
+        var payload = {
+          action: 'updateBooking',
+          id: id,
+          field: field,
+          value: value
+        };
+
+        var response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        var result = await response.json();
+
+        if (result.success) {
+          await loadBookings();
+        } else {
+          throw new Error(result.error || 'Failed to update');
+        }
+      } catch (error) {
+        console.error('Update error:', error);
+        alert('เกิดข้อผิดพลาดในการอัพเดท: ' + error.message);
+      }
+    }
+
+    function toggleRole() {
+      if (userRole === 'user') {
+        document.getElementById('password-modal').classList.add('show');
+      } else {
+        userRole = 'user';
+        document.getElementById('role-toggle').textContent = '👤 User Mode';
+        updateUI();
+      }
+    }
+
+    async function checkPassword() {
+      var password = document.getElementById('admin-password').value;
+      var errorMsg = document.getElementById('password-error');
+
+      try {
+        var response = await fetch(SCRIPT_URL + '?action=checkPassword&password=' + encodeURIComponent(password));
+        var result = await response.json();
+
+        if (result.success && result.valid) {
+          userRole = 'admin';
+          document.getElementById('role-toggle').textContent = '👨‍💼 Admin Mode';
+          closePasswordModal();
+          updateUI();
+        } else {
+          errorMsg.classList.remove('hidden');
+          document.getElementById('admin-password').value = '';
+        }
+      } catch (error) {
+        console.error('Password check error:', error);
+        alert('เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน');
+      }
+    }
+
+    function closePasswordModal() {
+      document.getElementById('password-modal').classList.remove('show');
+      document.getElementById('admin-password').value = '';
+      document.getElementById('password-error').classList.add('hidden');
+    }
+
+    function showPage(page) {
+      currentPage = page;
+      var pages = document.querySelectorAll('.page');
+      for (var i = 0; i < pages.length; i++) {
+        pages[i].classList.add('hidden');
+      }
+      document.getElementById('page-' + page).classList.remove('hidden');
+
+      var navBtns = document.querySelectorAll('nav button');
+      for (var i = 0; i < navBtns.length; i++) {
+        navBtns[i].classList.remove('bg-white', 'text-blue-600');
+      }
+      var navBtn = document.getElementById('nav-' + page);
+      if (navBtn) {
+        navBtn.classList.add('bg-white', 'text-blue-600');
+      }
+
+      updateUI();
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobile-menu').classList.toggle('hidden');
+    }
+
+    function updateUI() {
+      if (currentPage === 'check') {
+        renderCheckPage();
+      } else if (currentPage === 'report') {
+        renderReportPage();
+      }
+    }
+
+    function renderCheckPage() {
+      document.getElementById('booking-count').textContent = bookings.length + ' รายการ';
+
+      if (bookings.length === 0) {
+        document.getElementById('check-content').innerHTML = '<div class="text-center py-12 text-gray-500"><p class="text-lg">ยังไม่มีรายการจองรถ</p></div>';
+        return;
+      }
+
+      var html = '<table class="w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">รหัส</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ชื่อ</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">แผนก</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">รถ</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">เวลา</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">สถานะ</th>';
+      if (userRole === 'admin') {
+        html += '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">จัดการ</th>';
+      }
+      html += '</tr></thead><tbody class="divide-y divide-gray-200">';
+
+      for (var i = 0; i < bookings.length; i++) {
+        var b = bookings[i];
+        var statusClass = 'status-' + b.status.toLowerCase();
+        var displayDate = formatDateThai(b.use_date);
+        var displayStartTime = formatTimeOnly(b.start_time);
+        var displayEndTime = formatTimeOnly(b.end_time);
+        
+        html += '<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm">' + b.id_code + '</td><td class="px-4 py-3 text-sm">' + b.name + '</td><td class="px-4 py-3 text-sm">' + b.department + '</td><td class="px-4 py-3 text-sm">' + b.car_no + '</td><td class="px-4 py-3 text-sm">' + displayDate + '</td><td class="px-4 py-3 text-sm">' + displayStartTime + ' - ' + displayEndTime + '</td><td class="px-4 py-3"><span class="' + statusClass + '">' + b.status + '</span></td>';
+
+        if (userRole === 'admin') {
+          html += '<td class="px-4 py-3"><div class="flex flex-col gap-2">';
+          html += '<div class="flex items-center gap-2"><input type="checkbox" ' + (b.booking_checked === 'Yes' ? 'checked' : '') + ' onchange="updateBooking(\'' + b.id + '\', \'booking_checked\', this.checked ? \'Yes\' : \'No\')" class="rounded"><span class="text-xs">ตรวจสอบแล้ว</span></div>';
+          html += '<div class="flex items-center gap-2"><input type="checkbox" ' + (b.approved === 'Yes' ? 'checked' : '') + ' onchange="updateBooking(\'' + b.id + '\', \'approved\', this.checked ? \'Yes\' : \'No\')" class="rounded"><span class="text-xs">อนุมัติ</span></div>';
+          html += '<select onchange="updateBooking(\'' + b.id + '\', \'status\', this.value)" class="text-xs border rounded px-2 py-1">';
+          html += '<option ' + (b.status === 'Pending' ? 'selected' : '') + '>Pending</option>';
+          html += '<option ' + (b.status === 'Approved' ? 'selected' : '') + '>Approved</option>';
+          html += '<option ' + (b.status === 'Using' ? 'selected' : '') + '>Using</option>';
+          html += '<option ' + (b.status === 'Completed' ? 'selected' : '') + '>Completed</option>';
+          html += '<option ' + (b.status === 'Cancelled' ? 'selected' : '') + '>Cancelled</option>';
+          html += '</select></div></td>';
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById('check-content').innerHTML = html;
+    }
+
+    function renderReportPage() {
+      var total = bookings.length;
+      var pending = 0, approved = 0, using = 0, completed = 0;
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].status === 'Pending') pending++;
+        if (bookings[i].status === 'Approved') approved++;
+        if (bookings[i].status === 'Using') using++;
+        if (bookings[i].status === 'Completed') completed++;
+      }
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-approved').textContent = approved;
+      document.getElementById('stat-using').textContent = using;
+      document.getElementById('stat-completed').textContent = completed;
+
+      applyFilters();
+    }
+
+    function applyFilters() {
+      var carFilter = document.getElementById('filter-car').value;
+      var deptFilter = document.getElementById('filter-dept').value;
+      var statusFilter = document.getElementById('filter-status').value;
+      var dateFilter = document.getElementById('filter-date').value;
+
+      var filtered = [];
+
+      for (var i = 0; i < bookings.length; i++) {
+        var b = bookings[i];
+
+        if (carFilter && b.car_no !== carFilter) continue;
+        if (deptFilter && b.department !== deptFilter) continue;
+        if (statusFilter && b.status !== statusFilter) continue;
+        if (dateFilter && normalizeDate(b.use_date) !== dateFilter) continue;
+
+        filtered.push(b);
+      }
+
+      document.getElementById('filtered-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        document.getElementById('report-content').innerHTML = '<div class="text-center py-8 text-gray-500">ไม่พบข้อมูล</div>';
+        return;
+      }
+
+      var html = '<table class="w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">วันที่</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">รถ</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">พนักงาน</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">แผนก</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">คนขับ</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">เวลา</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">สถานที่</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">สถานะ</th></tr></thead><tbody class="divide-y divide-gray-200">';
+
+      for (var i = 0; i < filtered.length; i++) {
+        var b = filtered[i];
+        var statusClass = 'status-' + b.status.toLowerCase();
+        var displayDate = formatDateThai(b.use_date);
+        var displayStartTime = formatTimeOnly(b.start_time);
+        var displayEndTime = formatTimeOnly(b.end_time);
+        
+        html += '<tr class="hover:bg-gray-50"><td class="px-4 py-3 text-sm">'
+          + displayDate + '</td><td class="px-4 py-3 text-sm font-medium">'
+          + b.car_no + '</td><td class="px-4 py-3 text-sm">'
+          + b.name + '</td><td class="px-4 py-3 text-sm">'
+          + b.department + '</td><td class="px-4 py-3 text-sm">'
+          + b.driver + '</td><td class="px-4 py-3 text-sm">'
+          + displayStartTime + ' - '
+          + displayEndTime + '</td><td class="px-4 py-3 text-sm">'
+          + b.place + '</td><td class="px-4 py-3"><span class="'
+          + statusClass + '">'
+          + b.status + '</span></td></tr>';
+      }
+
+      html += '</tbody></table>';
+      document.getElementById('report-content').innerHTML = html;
+    }
+
+    function clearFilters() {
+      document.getElementById('filter-car').value = '';
+      document.getElementById('filter-dept').value = '';
+      document.getElementById('filter-status').value = '';
+      document.getElementById('filter-date').value = '';
+      applyFilters();
+    }
+
+    document.getElementById('admin-password').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        checkPassword();
+      }
+    });
+  </script>
 </body>
+
 </html>
