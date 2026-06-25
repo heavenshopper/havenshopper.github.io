@@ -1,0 +1,6 @@
+{
+  "name": "Heaven Shopper Stock",
+  "description": "A beautiful, modern product stock catalog browser for Heaven Shopper, featuring rich categorization, quick search, price sorting, detailed quick view, and zoomable item previews.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
